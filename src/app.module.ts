@@ -1,0 +1,38 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './module/auth/auth.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { GlobalResponseInterceptor } from './interceptor/global-response.interceptor';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { GlobalExceptionFilter } from './filter/global-exception.filter';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true
+    }),
+    RedisModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        type: 'single',
+        url: configService.getOrThrow<string>('REDIS_URL')
+      }),
+      inject: [ConfigService]
+    }),
+    AuthModule
+  ],
+  controllers: [AppController],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: GlobalResponseInterceptor
+    }
+  ],
+})
+export class AppModule {}
