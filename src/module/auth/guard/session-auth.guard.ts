@@ -23,9 +23,28 @@ export class SessionAuthGuard implements CanActivate {
       throw new UnauthorizedException('유효하지 않은 세션입니다.');
     }
 
-    const session = JSON.parse(rawSession);
+    const session = JSON.parse(rawSession) as unknown;
 
-    request.user = session;
+    if (
+      typeof session !== 'object' || session === null ||
+      !('userId' in session) || typeof session.userId !== 'string' ||
+      !('deviceId' in session) || typeof session.deviceId !== 'string'
+    ) {
+      throw new UnauthorizedException('유효하지 않은 세션입니다.');
+    }
+
+    const deviceSessionKey = `user:${session.userId}:device:${session.deviceId}:session`;
+
+    const currentSessionId = await this.redis.get(deviceSessionKey);
+
+    if (currentSessionId !== sessionId) {
+      throw new UnauthorizedException('교체된 세션입니다.');
+    }
+
+    request.user = {
+      sessionId,
+      ...session
+    };
 
     return true;
   }

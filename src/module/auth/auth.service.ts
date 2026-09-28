@@ -7,6 +7,19 @@ import type Redis from 'ioredis';
 import { randomUUID } from 'node:crypto';
 import { AppleLoginRequestDto } from './dto/request/apple-login-request.dto';
 import { type DecodedIdToken } from 'firebase-admin/auth';
+import { SessionPayload } from './interface/session-payload.interface';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const REPLACE_SESSION_SCRIPT = readFileSync(
+  join(__dirname, 'redis/scripts/replace-device-session.lua'),
+  'utf8'
+);
+
+const DELETE_SESSION_SCRIPT = readFileSync(
+  join(__dirname, 'redis/scripts/delete-device-session.lua'),
+  'utf8',
+);
 
 @Injectable()
 export class AuthService {
@@ -49,36 +62,40 @@ export class AuthService {
     userId: string,
     deviceId: string
   ) {
-    const deviceSessionKey = `user:${userId}:device:${deviceId}:session`;
-
-    const prevSessionId = await this.redis.get(deviceSessionKey);
-
     const sessionId = randomUUID();
+    const deviceSessionKey = `user:${userId}:device:${deviceId}:session`;
     const sessionKey = `session:${sessionId}`;
 
-    const pipeline = this.redis.multi();
-
-    if (prevSessionId) {
-      pipeline.del(`session:${prevSessionId}`);
-    }
-
-    pipeline.set(
-      sessionKey,
-      JSON.stringify({ userId, deviceId }),
-      'EX',
-      this.SESSION_TTL
-    );
-
-    pipeline.set(
+    await this.redis.eval(
+      REPLACE_SESSION_SCRIPT,
+      2,
       deviceSessionKey,
+      sessionKey,
       sessionId,
-      'EX',
-      this.SESSION_TTL
+      JSON.stringify({ userId, deviceId }),
+      String(this.SESSION_TTL)
     );
-
-    await pipeline.exec();
 
     return sessionId;
+  }
+
+  private async deleteSession(
+    sessionId: string,
+    userId: string,
+    deviceId: string
+  ) {
+    const deviceSessionKey = `user:${userId}:device:${deviceId}:session`;
+    const sessionKey = `session:${sessionId}`;
+
+    const deleted = await this.redis.eval(
+      DELETE_SESSION_SCRIPT,
+      2,
+      deviceSessionKey,
+      sessionKey,
+      sessionId
+    );
+
+    return deleted === 1;
   }
 
   public async appleLogin(
@@ -105,5 +122,13 @@ export class AuthService {
     return {
       sessionId
     };
+  }
+
+  public async logout(
+    user: SessionPayload
+  ) {
+    const { sessionId, userId, deviceId } = user;
+
+    return await this.deleteSession(sessionId, userId, deviceId);
   }
 }

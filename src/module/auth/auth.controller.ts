@@ -7,19 +7,11 @@ import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { AppleLoginRequestDto } from './dto/request/apple-login-request.dto';
 import { type DecodedIdToken } from 'firebase-admin/auth';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { SessionAuthGuard } from './guard/session-auth.guard';
+import { type SessionPayload } from './interface/session-payload.interface';
+import { LogoutResponseDto } from './dto/response/logout-response.dto';
 
 @ApiTags('Auth')
-@ApiBearerAuth('jwt')
-@ApiHeader({
-  name: 'x-device-id',
-  description: '디바이스 UUID',
-  required: true,
-  schema: {
-    type: 'string',
-    format: 'uuid',
-    example: '550e8400-e29b-41d4-a716-446655440000'
-  }
-})
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -43,6 +35,17 @@ export class AuthController {
   @ApiInternalServerErrorResponse({
     description: '로그인 처리 중 서버 오류 발생'
   })
+  @ApiHeader({
+    name: 'x-device-id',
+    description: '디바이스 UUID',
+    required: true,
+    schema: {
+      type: 'string',
+      format: 'uuid',
+      example: '550e8400-e29b-41d4-a716-446655440000'
+    }
+  })
+  @ApiBearerAuth('jwt')
   public async appleLogin(
     @GetUser() user: DecodedIdToken,
     @Body() dto: AppleLoginRequestDto,
@@ -55,6 +58,42 @@ export class AuthController {
       data: {
         sessionId
       }
+    };
+  }
+
+  @UseGuards(SessionAuthGuard)
+  @Post('/logout')
+  @ApiOperation({
+    summary: '로그아웃',
+    description: 'x-session-id 헤더의 세션을 로그아웃합니다. 요청 처리 중 세션이 새 로그인으로 교체된 경우에는 새 세션을 유지하고 200 응답으로 교체 사실을 알립니다.'
+  })
+  @ApiHeader({
+    name: 'x-session-id',
+    description: 'Apple 로그인 응답에서 발급받은 세션 ID',
+    required: true,
+    schema: {
+      type: 'string',
+      format: 'uuid',
+      example: '550e8400-e29b-41d4-a716-446655440000'
+    }
+  })
+  @ApiOkResponse({
+    description: '세션 삭제 완료 또는 요청 처리 중 세션이 교체되어 새 세션을 유지함',
+    type: LogoutResponseDto
+  })
+  @ApiUnauthorizedResponse({
+    description: '세션 ID가 없거나, 세션이 유효하지 않거나, 이미 교체됨'
+  })
+  @ApiInternalServerErrorResponse({
+    description: '로그아웃 처리 중 서버 오류 발생'
+  })
+  public async logout(
+    @GetUser() user: SessionPayload
+  ): Promise<LogoutResponseDto> {
+    const result = await this.authService.logout(user);
+
+    return {
+      message: result ? '로그아웃에 성공했습니다.' : '이미 교체된 세션입니다.'
     };
   }
 }
