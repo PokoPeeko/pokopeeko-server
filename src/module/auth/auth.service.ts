@@ -45,17 +45,25 @@ export class AuthService {
       }
     });
 
+    const needsProfileSetup: boolean = !!existUser;
+
     if (existUser) {
       if (existUser.firebaseUid !== dto.firebaseUid || existUser.appleId !== dto.appleId) {
         throw new UnauthorizedException('연결된 인증 계정 정보가 일치하지 않습니다.');
       }
 
-      return existUser;
+      return {
+        userAccount: existUser,
+        needsProfileSetup
+      };
     }
 
-    return prisma.user.create({
-      data: dto
-    });
+    return {
+      userAccount: await prisma.user.create({
+        data: dto
+      }),
+      needsProfileSetup
+    };
   }
 
   private async createSession(
@@ -115,12 +123,13 @@ export class AuthService {
       email
     };
 
-    const userAccount = await this.findOrCreateUser(findOrCreateUserDto);
+    const { userAccount, needsProfileSetup } = await this.findOrCreateUser(findOrCreateUserDto);
 
     const sessionId = await this.createSession(userAccount.id, deviceId);
 
     return {
-      sessionId
+      sessionId,
+      needsProfileSetup
     };
   }
 

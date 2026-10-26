@@ -51,12 +51,13 @@ export class AuthController {
     @Body() dto: AppleLoginRequestDto,
     @DeviceId(new ParseUUIDPipe()) deviceId: string
   ): Promise<AppleLoginResponseDto> {
-    const { sessionId } = await this.authService.appleLogin(user, dto, deviceId);
+    const { sessionId, needsProfileSetup } = await this.authService.appleLogin(user, dto, deviceId);
 
     return {
       message: '로그인에 성공했습니다.',
       data: {
-        sessionId
+        sessionId,
+        needsProfileSetup
       }
     };
   }
