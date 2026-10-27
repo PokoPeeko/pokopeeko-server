@@ -7,6 +7,7 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { GlobalResponseInterceptor } from './interceptor/global-response.interceptor';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { GlobalExceptionFilter } from './filter/global-exception.filter';
+import { UserModule } from './module/user/user.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { GlobalExceptionFilter } from './filter/global-exception.filter';
       }),
       inject: [ConfigService]
     }),
-    AuthModule
+    AuthModule,
+    UserModule
   ],
   controllers: [AppController],
   providers: [
