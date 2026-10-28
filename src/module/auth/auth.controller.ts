@@ -6,7 +6,7 @@ import { FirebaseGuard } from './guard/firebase.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { AppleLoginRequestDto } from './dto/request/apple-login-request.dto';
 import { type DecodedIdToken } from 'firebase-admin/auth';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiSecurity, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { SessionAuthGuard } from './guard/session-auth.guard';
 import { type SessionPayload } from './interface/session-payload.interface';
 import { LogoutResponseDto } from './dto/response/logout-response.dto';
@@ -45,7 +45,7 @@ export class AuthController {
       example: '550e8400-e29b-41d4-a716-446655440000'
     }
   })
-  @ApiBearerAuth('jwt')
+  @ApiBearerAuth('firebase')
   public async appleLogin(
     @GetUser() user: DecodedIdToken,
     @Body() dto: AppleLoginRequestDto,
@@ -68,16 +68,7 @@ export class AuthController {
     summary: '로그아웃',
     description: 'x-session-id 헤더의 세션을 로그아웃합니다. 요청 처리 중 세션이 새 로그인으로 교체된 경우에는 새 세션을 유지하고 200 응답으로 교체 사실을 알립니다.'
   })
-  @ApiHeader({
-    name: 'x-session-id',
-    description: 'Apple 로그인 응답에서 발급받은 세션 ID',
-    required: true,
-    schema: {
-      type: 'string',
-      format: 'uuid',
-      example: '550e8400-e29b-41d4-a716-446655440000'
-    }
-  })
+  @ApiSecurity('session')
   @ApiOkResponse({
     description: '세션 삭제 완료 또는 요청 처리 중 세션이 교체되어 새 세션을 유지함',
     type: LogoutResponseDto

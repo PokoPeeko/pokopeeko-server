@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { diskStorage } from 'multer';
 import { UpdateProfileResponseDto } from './dto/response/update-profile-response.dto';
-import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiSecurity, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 
 @ApiTags('User')
 @ApiExtraModels(UpdateProfileRequestDto)
@@ -35,16 +35,7 @@ export class UserController {
     summary: '프로필 수정',
     description: '로그인한 사용자의 표시 이름과 프로필 이미지를 수정합니다. x-session-id 헤더에 세션 ID를 전달하고, multipart/form-data로 프로필 이미지와 선택적인 표시 이름을 전송합니다.'
   })
-  @ApiHeader({
-    name: 'x-session-id',
-    description: 'Apple 로그인 응답에서 발급받은 세션 ID',
-    required: true,
-    schema: {
-      type: 'string',
-      format: 'uuid',
-      example: '550e8400-e29b-41d4-a716-446655440000'
-    }
-  })
+  @ApiSecurity('session')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     required: true,

@@ -36,8 +36,22 @@ async function bootstrap() {
     .setVersion('1.0.0')
     .addTag('API Tag')
     .addBearerAuth(
-      { type: 'http', bearerFormat: 'JWT' },
-      'jwt'
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Firebase Authentication ID Token'
+      },
+      'firebase'
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'x-session-id',
+        description: 'Session ID'
+      },
+      'session'
     )
     .build();
 
