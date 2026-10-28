@@ -8,6 +8,8 @@ import { GlobalResponseInterceptor } from './interceptor/global-response.interce
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { GlobalExceptionFilter } from './filter/global-exception.filter';
 import { UserModule } from './module/user/user.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -20,6 +22,10 @@ import { UserModule } from './module/user/user.module';
         url: configService.getOrThrow<string>('REDIS_URL')
       }),
       inject: [ConfigService]
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/static'
     }),
     AuthModule,
     UserModule
