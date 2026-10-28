@@ -13,5 +13,5 @@ export class UpdateProfileRequestDto {
     @IsString()
     @Length(1, 10)
     @Matches(/^\S+$/, { message: '공백을 포함할 수 없습니다.' })
-    displayName: string;
+    displayName!: string;
 }

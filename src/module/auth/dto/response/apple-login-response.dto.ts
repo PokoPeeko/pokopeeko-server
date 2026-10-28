@@ -7,14 +7,14 @@ export class AppleLoginResponseData {
     format: 'uuid',
     example: '550e8400-e29b-41d4-a716-446655440000'
   })
-  sessionId: string;
+  sessionId!: string;
 
   @ApiProperty({
     description: '프로필 설정 여부 플래그. 현재 구현에서는 기존 사용자이면 true, 신규 사용자이면 false를 반환합니다.',
     type: Boolean,
     example: false
   })
-  needsProfileSetup: boolean;
+  needsProfileSetup!: boolean;
 }
 
 export class AppleLoginResponseDto extends GlobalResponse<AppleLoginResponseData> {

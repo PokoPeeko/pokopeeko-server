@@ -7,7 +7,7 @@ export class UpdateProfileResponseData {
         nullable: true,
         example: '권수영'
     })
-    displayName: string | null;
+    displayName!: string | null;
 
     @ApiProperty({
         description: '저장된 프로필 이미지 파일명입니다. UUID와 원본 확장자로 구성됩니다.',
@@ -15,7 +15,7 @@ export class UpdateProfileResponseData {
         nullable: true,
         example: '550e8400-e29b-41d4-a716-446655440000.png'
     })
-    profileImage: string | null;
+    profileImage!: string | null;
 }
 
 export class UpdateProfileResponseDto {
