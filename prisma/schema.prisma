@@ -16,5 +16,31 @@ model User {
   profileImage String? @map("profile_image")
   createdAt DateTime @default(now()) @map("created_at")
 
+  sentFriendRequests Friendship[] @relation("SentFriendRequests")
+  receivedFriendRequests Friendship[] @relation("ReceivedFriendRequests")
+
   @@map("users")
+}
+
+model Friendship {
+  id BigInt @id @default(autoincrement()) @map("id")
+  requesterId String @map("requester_id")
+  addresseeId String @map("addressee_id")
+  userIdMin String @map("user_id_min")
+  userIdMax String @map("user_id_max")
+  status FriendshipStatus @default(PENDING)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  requester User @relation("SentFriendRequests", fields: [requesterId], references: [id])
+  addressee User @relation("ReceivedFriendRequests", fields: [addresseeId], references: [id])
+
+  @@unique([userIdMin, userIdMax])
+  @@map("friendships")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

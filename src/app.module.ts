@@ -10,6 +10,7 @@ import { GlobalExceptionFilter } from './filter/global-exception.filter';
 import { UserModule } from './module/user/user.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { FriendModule } from './module/friend/friend.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { join } from 'path';
       serveRoot: '/static'
     }),
     AuthModule,
-    UserModule
+    UserModule,
+    FriendModule
   ],
   controllers: [AppController],
   providers: [
