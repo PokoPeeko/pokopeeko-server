@@ -6,7 +6,7 @@ import prisma from 'src/database/prisma';
 @Injectable()
 export class UserService {
     public async updateProfile(
-        profileImage: Express.Multer.File,
+        profileImage: Express.Multer.File | undefined,
         user: SessionPayload,
         dto: UpdateProfileRequestDto
     ) {
@@ -22,7 +22,7 @@ export class UserService {
             where: { id: user.userId },
             data: {
                 displayName: dto.displayName,
-                profileImage: profileImage.filename
+                profileImage: profileImage?.filename
             },
             select: {
                 displayName: true,

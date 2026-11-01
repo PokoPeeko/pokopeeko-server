@@ -73,7 +73,7 @@ export class UserController {
     description: '프로필 수정 또는 파일 저장 중 서버 오류 발생'
   })
   public async updateProfile(
-    @UploadedFile() profileImage: Express.Multer.File,
+    @UploadedFile() profileImage: Express.Multer.File | undefined,
     @GetUser() user: SessionPayload,
     @Body() dto: UpdateProfileRequestDto
   ): Promise<UpdateProfileResponseDto> {
