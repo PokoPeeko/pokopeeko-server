@@ -48,10 +48,9 @@ export class AuthController {
   @ApiBearerAuth('firebase')
   public async appleLogin(
     @GetUser() user: DecodedIdToken,
-    @Body() dto: AppleLoginRequestDto,
     @DeviceId(new ParseUUIDPipe()) deviceId: string
   ): Promise<AppleLoginResponseDto> {
-    const { sessionId, needsProfileSetup } = await this.authService.appleLogin(user, dto, deviceId);
+    const { sessionId, needsProfileSetup } = await this.authService.appleLogin(user, deviceId);
 
     return {
       message: '로그인에 성공했습니다.',

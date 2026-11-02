@@ -108,18 +108,15 @@ export class AuthService {
 
   public async appleLogin(
     user: DecodedIdToken,
-    dto: AppleLoginRequestDto,
     deviceId: string
   ) {
     const firebaseUid = user.uid;
     const appleId = user.firebase.identities?.['apple.com']?.[0];
-    const displayName = dto.displayName;
     const email = user.email;
 
     const findOrCreateUserDto: FindOrCreateUserRequestDto = {
       firebaseUid,
       appleId,
-      displayName,
       email
     };
 
