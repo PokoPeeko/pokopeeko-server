@@ -11,6 +11,38 @@ export class UserService {
         });
     }
 
+    public async getMyProfile(user: SessionPayload) {
+        const userAccount = await this.findUserById(user.userId);
+
+        if (!userAccount) {
+            throw new NotFoundException('사용자 정보가 존재하지 않습니다.');
+        }
+
+        const profile = {
+            id: userAccount.id,
+            displayName: userAccount.displayName,
+            profileImage: userAccount.profileImage
+        };
+
+        return profile;
+    }
+
+    public async getUserProfile(targetId: string) {
+        const userAccount = await this.findUserById(targetId);
+
+        if (!userAccount) {
+            throw new NotFoundException('사용자 정보가 존재하지 않습니다.');
+        }
+
+        const profile = {
+            id: userAccount.id,
+            displayName: userAccount.displayName,
+            profileImage: userAccount.profileImage
+        };
+
+        return profile;
+    }
+
     public async updateProfile(
         profileImage: Express.Multer.File | undefined,
         user: SessionPayload,
