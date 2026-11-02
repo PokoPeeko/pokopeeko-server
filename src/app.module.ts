@@ -12,6 +12,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { FriendModule } from './module/friend/friend.module';
 import { FriendRequestModule } from './module/friend-request/friend-request.module';
+import { SessionModule } from './module/session/session.module';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { FriendRequestModule } from './module/friend-request/friend-request.modu
     AuthModule,
     UserModule,
     FriendModule,
-    FriendRequestModule
+    FriendRequestModule,
+    SessionModule
   ],
   controllers: [AppController],
   providers: [
