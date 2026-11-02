@@ -13,6 +13,7 @@ import { join } from 'path';
 import { FriendModule } from './module/friend/friend.module';
 import { FriendRequestModule } from './module/friend-request/friend-request.module';
 import { SessionModule } from './module/session/session.module';
+import { UserStatusModule } from './module/user-status/user-status.module';
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import { SessionModule } from './module/session/session.module';
     UserModule,
     FriendModule,
     FriendRequestModule,
-    SessionModule
+    SessionModule,
+    UserStatusModule
   ],
   controllers: [AppController],
   providers: [

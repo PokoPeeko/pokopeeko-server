@@ -34,6 +34,26 @@ export class FriendService {
         return friendship;
     }
 
+    public async getFriendIds(userId: string) {
+        const friendships = await prisma.friendship.findMany({
+            where: {
+                OR: [
+                    { requesterId: userId },
+                    { addresseeId: userId }
+                ],
+                status: FriendshipStatus.ACCEPTED
+            },
+            select: {
+                requesterId: true,
+                addresseeId: true
+            }
+        });
+
+        return friendships.map(({ requesterId, addresseeId }) =>
+            requesterId === userId ? addresseeId : requesterId
+        );
+    }
+
     public async searchFriends(
         user: SessionPayload,
         keyword: string | undefined

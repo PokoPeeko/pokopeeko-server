@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from "@nestjs/common";
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, UnauthorizedException } from "@nestjs/common";
 import { GlobalResponse } from "../common/dto/global-response.dto";
 import { Request, Response } from 'express';
 import { ValidationException } from "../common/exception/validation.exception";
@@ -123,6 +123,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ...(exceptionResponse as Record<string, unknown>),
       });
 
+      return;
+    }
+
+    if (exception instanceof UnauthorizedException) {
+      client.emit('exception', {
+        success: false,
+        code: 'WS_ERROR',
+        message: exception.message,
+      });
+
+      client.disconnect();
       return;
     }
 
