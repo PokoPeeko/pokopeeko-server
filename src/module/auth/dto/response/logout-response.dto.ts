@@ -12,4 +12,13 @@ export class LogoutResponseDto {
     example: '로그아웃에 성공했습니다.'
   })
   declare message: string;
+
+  @ApiProperty({
+    description: '추가 응답 데이터 없음',
+    type: 'object',
+    properties: {},
+    nullable: true,
+    example: null
+  })
+  declare data?: null;
 }

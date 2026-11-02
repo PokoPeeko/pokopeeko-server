@@ -33,23 +33,22 @@ export class UserController {
   @Patch('/profile')
   @ApiOperation({
     summary: '프로필 수정',
-    description: '로그인한 사용자의 표시 이름과 프로필 이미지를 수정합니다. x-session-id 헤더에 세션 ID를 전달하고, multipart/form-data로 프로필 이미지와 선택적인 표시 이름을 전송합니다.'
+    description: '로그인한 사용자의 표시 이름과 프로필 이미지를 수정합니다. x-session-id 헤더에 세션 ID를 전달하고 multipart/form-data를 사용합니다. 표시 이름과 프로필 이미지는 모두 선택사항이며, 생략한 항목은 기존 값을 유지합니다.'
   })
   @ApiSecurity('session')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    required: true,
+    required: false,
     schema: {
       allOf: [
         { $ref: getSchemaPath(UpdateProfileRequestDto) },
         {
           type: 'object',
-          required: ['profile_image'],
           properties: {
             profile_image: {
               type: 'string',
               format: 'binary',
-              description: '업로드할 프로필 이미지 파일'
+              description: '업로드할 프로필 이미지 파일. 생략하면 기존 이미지를 유지합니다.'
             }
           }
         }
