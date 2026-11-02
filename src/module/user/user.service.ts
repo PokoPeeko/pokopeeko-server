@@ -5,6 +5,12 @@ import prisma from 'src/database/prisma';
 
 @Injectable()
 export class UserService {
+    public async findUserById(userId: string) {
+        return await prisma.user.findUnique({
+            where: { id: userId }
+        });
+    }
+
     public async updateProfile(
         profileImage: Express.Multer.File | undefined,
         user: SessionPayload,
