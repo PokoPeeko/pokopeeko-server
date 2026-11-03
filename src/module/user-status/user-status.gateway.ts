@@ -9,7 +9,7 @@ import { UserStatusService } from './user-status.service';
 import { WindowStatusUpdateDto } from './dto/window-status-update.dto';
 import { MusicStatusUpdateDto } from './dto/music-status-update.dto';
 
-@WebSocketGateway(80, {
+@WebSocketGateway({
   namespace: 'user-status',
   cors: {
     origin: '*'
