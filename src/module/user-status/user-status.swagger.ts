@@ -1,6 +1,7 @@
 import { WindowStatusUpdateDto } from './dto/window-status-update.dto';
 import { MusicStatusUpdateDto } from './dto/music-status-update.dto';
 import {
+    MusicStatusRemovedDto,
     MusicStatusUpdatedDto,
     UserStatusAuthDto,
     UserStatusExceptionDto,
@@ -14,6 +15,7 @@ export const USER_STATUS_SWAGGER_MODELS = [
     MusicStatusUpdateDto,
     WindowStatusUpdatedDto,
     MusicStatusUpdatedDto,
+    MusicStatusRemovedDto,
     UserStatusRemovedDto,
     UserStatusExceptionDto
 ];
@@ -42,6 +44,7 @@ const socket = io('http://localhost:80/user-status', {
 
 socket.on('window_status:updated', (status) => console.log(status));
 socket.on('music_status:updated', (status) => console.log(status));
+socket.on('music_status:removed', ({ userId }) => console.log(userId));
 socket.on('user_status:removed', ({ userId }) => console.log(userId));
 socket.on('exception', (error) => console.error(error));
 socket.on('connect_error', (error) => console.error(error.message));
@@ -53,18 +56,25 @@ socket.connect();
 | 이벤트 | Payload 스키마 | 처리 |
 | --- | --- | --- |
 | window_status:update | WindowStatusUpdateDto | 앱 제목과 작업 내용을 저장하고 현재 ACCEPTED 친구들에게 전송 |
-| music_status:update | MusicStatusUpdateDto | 가수명과 곡 제목을 저장하고 현재 ACCEPTED 친구들에게 전송 |
+| music_status:update | MusicStatusUpdateDto | 가수명, 곡 제목과 재생 상태를 저장하고 현재 ACCEPTED 친구들에게 전송 |
+| music_status:remove | 없음 | 본인의 음악 상태 키만 삭제하고 현재 ACCEPTED 친구들에게 삭제 알림 전송 |
 | friends_status:get | 없음 | 요청한 소켓에 현재 저장된 친구들의 앱·음악 상태를 개별 이벤트로 전송 |
 | user_status:heartbeat | 없음 | 본인의 기존 앱·음악 상태 키 TTL을 각각 60초로 갱신 |
 
-앱·음악 필드는 모두 필수 문자열이며, 빈 값·공백만 있는 값·알 수 없는 필드는 거절합니다. 최대 길이는 앱 제목 100자, 작업 내용 500자, 가수명·곡 제목 각각 200자입니다. 사용자 ID는 payload로 받지 않고 검증된 세션에서 결정합니다.
+앱 제목·작업 내용·가수명·곡 제목은 모두 필수 문자열이며, 빈 값·공백만 있는 값·알 수 없는 필드는 거절합니다. 최대 길이는 앱 제목 100자, 작업 내용 500자, 가수명·곡 제목 각각 200자입니다. 음악의 status는 필수이며 PLAYING(재생 중), PAUSE(일시 정지)만 허용합니다. 일시 정지할 때도 가수명과 곡 제목을 함께 전달합니다. 사용자 ID는 payload로 받지 않고 검증된 세션에서 결정합니다.
 
 ~~~ts
 socket.emit('window_status:update', {
   appTitle: 'Visual Studio Code',
   taskDescription: 'PokoPeeko 서버 개발 중',
 });
-socket.emit('music_status:update', { artistName: '아이유', trackTitle: '밤편지' });
+socket.emit('music_status:update', {
+  artistName: '아이유',
+  trackTitle: '밤편지',
+  status: 'PLAYING',
+});
+// 음악 앱 종료 시 음악 상태만 삭제
+socket.emit('music_status:remove');
 socket.emit('friends_status:get');
 ~~~
 
@@ -76,10 +86,13 @@ socket.emit('friends_status:get');
 | --- | --- | --- |
 | window_status:updated | WindowStatusUpdatedDto | 친구의 앱 상태 변경 또는 친구 상태 조회 |
 | music_status:updated | MusicStatusUpdatedDto | 친구의 음악 상태 변경 또는 친구 상태 조회 |
+| music_status:removed | MusicStatusRemovedDto | music_status:remove로 음악 상태를 삭제했을 때 현재 친구들에게 전달 |
 | user_status:removed | UserStatusRemovedDto | 사용자의 마지막 소켓 종료 후 앱·음악 상태를 삭제했을 때 현재 친구들에게 전달 |
 | exception | UserStatusExceptionDto | 연결 이후 입력 검증·인증·서버 오류 |
 
 updatedAt은 서버가 Redis에 저장한 Unix timestamp(밀리초)입니다. 초기 조회와 실시간 이벤트에 같은 형식으로 포함되며, deviceId는 공개하지 않습니다.
+
+music_status:updated의 status로 재생 중과 일시 정지를 구분합니다. music_status:removed를 받으면 해당 userId의 음악 표시만 제거하고 앱 상태는 유지하세요. 삭제 요청은 음악 키가 이미 없어도 현재 친구들에게 삭제 알림을 전송합니다.
 
 연결 성공 시 친구 상태를 자동 조회합니다. 조회는 ACCEPTED 관계만 대상으로 하며 저장된 상태가 없거나 만료됐으면 해당 상태 이벤트를 보내지 않습니다. 빈 목록이나 조회 완료를 나타내는 별도 이벤트는 없으므로, friends_status:get 자체가 클라이언트의 오래된 상태를 지우지는 않습니다.
 
@@ -89,8 +102,9 @@ updatedAt은 서버가 Redis에 저장한 Unix timestamp(밀리초)입니다. �
 
 - 앱·음악 상태의 TTL은 각각 **60초**입니다. 연결된 동안 **20초마다 user_status:heartbeat**를 보내는 방식을 권장합니다.
 - heartbeat는 상태 내용이나 updatedAt을 변경하지 않고, 만료되거나 없는 키를 복원하지 않습니다. 재연결 시 현재 앱·음악 상태를 다시 전송하세요.
-- 동일 사용자의 소켓이 여러 개라면 마지막 소켓이 종료될 때만 상태를 삭제합니다. user_status:removed를 받으면 해당 userId의 앱·음악 상태를 모두 지우세요.
-- Redis TTL의 자연 만료만으로 user_status:removed가 전송되지는 않습니다.
+- 동일 사용자의 소켓이 여러 개라면 연결 종료에 따른 앱·음악 상태 삭제는 마지막 소켓이 종료될 때만 수행합니다. user_status:removed를 받으면 해당 userId의 앱·음악 상태를 모두 지우세요.
+- 음악 앱만 종료하면 소켓을 유지한 채 music_status:remove를 보내세요. 음악 상태는 사용자 단위이므로 동일 사용자의 다른 소켓이 연결되어 있어도 삭제됩니다.
+- Redis TTL의 자연 만료만으로 user_status:removed나 music_status:removed가 전송되지는 않습니다.
 - 세션 무효화 후 별도 이벤트를 보내지 않아도 20초 주기 검사에서 발견하면 연결을 종료합니다. 검사 전까지 수신이 이어질 수 있으며, Redis 응답 지연이나 장애 시 종료가 지연될 수 있습니다.
 
 ~~~ts

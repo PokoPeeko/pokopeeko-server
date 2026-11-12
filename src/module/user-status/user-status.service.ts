@@ -61,6 +61,7 @@ export class UserStatusService {
                 deviceId: session.deviceId,
                 artistName: payload.artistName,
                 trackTitle: payload.trackTitle,
+                status: payload.status,
                 updatedAt
             }),
             'EX',
@@ -70,6 +71,14 @@ export class UserStatusService {
         return {
             friendIds: await this.friendService.getFriendIds(session.userId),
             updatedAt
+        };
+    }
+
+    public async musicStatusRemove(userId: string) {
+        await this.redis.del(this.getMusicStatusKey(userId));
+
+        return {
+            friendIds: await this.friendService.getFriendIds(userId)
         };
     }
 
@@ -114,8 +123,8 @@ export class UserStatusService {
             }
 
             if (musicStatus) {
-                const { artistName, trackTitle, updatedAt } = JSON.parse(musicStatus) as MusicStatusUpdateDto & { updatedAt: number };
-                friendsMusicStatus.push({ userId: id, artistName, trackTitle, updatedAt });
+                const { artistName, trackTitle, status, updatedAt } = JSON.parse(musicStatus) as MusicStatusUpdateDto & { updatedAt: number };
+                friendsMusicStatus.push({ userId: id, artistName, trackTitle, status, updatedAt });
             }
         });
 

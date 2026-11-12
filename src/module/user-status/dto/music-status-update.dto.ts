@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Length, Matches } from 'class-validator';
+import { IsEnum, IsString, Length, Matches } from 'class-validator';
+
+enum MusicStatus {
+    PLAYING = 'PLAYING',
+    PAUSE = 'PAUSE'
+}
 
 export class MusicStatusUpdateDto {
     @ApiProperty({
@@ -25,4 +30,12 @@ export class MusicStatusUpdateDto {
     @Length(1, 200)
     @Matches(/\S/, { message: '공백만 입력할 수 없습니다.' })
     trackTitle!: string;
+
+    @ApiProperty({
+        description: '현재 곡의 재생 상태. PLAYING은 재생 중, PAUSE는 일시 정지를 의미합니다.',
+        enum: MusicStatus,
+        example: MusicStatus.PLAYING
+    })
+    @IsEnum(MusicStatus)
+    status!: MusicStatus;
 }

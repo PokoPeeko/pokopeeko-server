@@ -91,8 +91,24 @@ export class UserStatusGateway implements OnGatewayInit<Namespace>, OnGatewayCon
       userId,
       artistName: payload.artistName,
       trackTitle: payload.trackTitle,
+      status: payload.status,
       updatedAt
     });
+  }
+
+  @SubscribeMessage('music_status:remove')
+  async handleMusicStatusRemove(
+    @ConnectedSocket() client: CustomSocket
+  ): Promise<void> {
+    const { userId } = client.data.session;
+
+    const { friendIds } = await this.userStatusService.musicStatusRemove(userId);
+
+    if (friendIds.length === 0) return;
+
+    const rooms = friendIds.map(id => `user:${id}`);
+
+    this.server.to(rooms).emit('music_status:removed', { userId });
   }
 
   afterInit(server: Namespace) {

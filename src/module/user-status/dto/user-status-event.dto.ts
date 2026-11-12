@@ -45,6 +45,15 @@ export class MusicStatusUpdatedDto extends MusicStatusUpdateDto {
     updatedAt!: number;
 }
 
+export class MusicStatusRemovedDto {
+    @ApiProperty({
+        description: '음악 상태가 삭제된 사용자의 ID. 해당 사용자의 음악 표시만 제거합니다.',
+        format: 'uuid',
+        example: '9f02a61e-2adc-4e23-b0ae-c47a9bd8c788'
+    })
+    userId!: string;
+}
+
 export class UserStatusRemovedDto {
     @ApiProperty({
         description: '마지막 소켓이 종료되어 앱·음악 상태가 삭제된 사용자의 ID',
