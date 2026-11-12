@@ -11,6 +11,25 @@ export class UserService {
         });
     }
 
+    public async searchUsers(
+        user: SessionPayload,
+        keyword: string | undefined
+    ) {
+        const users = await prisma.user.findMany({
+            where: {
+                id: { not: user.userId },
+                displayName: { contains: keyword }
+            },
+            select: {
+                id: true,
+                displayName: true,
+                profileImage: true
+            }
+        });
+
+        return users;
+    }
+
     public async getMyProfile(user: SessionPayload) {
         const userAccount = await this.findUserById(user.userId);
 

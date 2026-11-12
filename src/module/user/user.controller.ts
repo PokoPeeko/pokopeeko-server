@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SessionAuthGuard } from '../auth/guard/session-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
@@ -12,12 +12,36 @@ import { UpdateProfileResponseDto } from './dto/response/update-profile-response
 import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { GetMyProfileResponseDto } from './dto/response/get-my-profile-response.dto';
 import { GetUserProfileResponseDto } from './dto/response/get-user-profile-response.dto';
+import { SearchUsersQueryDto } from './dto/request/search-users-request.dto';
+import { SearchUsersResponseDto } from './dto/response/search-users-response.dto';
 
 @ApiTags('User')
 @ApiExtraModels(UpdateProfileRequestDto)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @UseGuards(SessionAuthGuard)
+  @Get('/search')
+  @ApiOperation({ summary: '사용자 검색', description: '로그인한 사용자가 친구 관계와 관계없이 사용자의 표시 이름으로 부분 검색합니다. 인증된 사용자 본인은 검색 결과에서 제외하며, 검색어를 생략하면 본인을 제외한 전체 사용자를 조회합니다. 표시 이름과 이미지가 설정되지 않은 경우 해당 필드는 null입니다.' })
+  @ApiSecurity('session')
+  @ApiOkResponse({ description: '사용자 검색 완료', type: SearchUsersResponseDto })
+  @ApiBadRequestResponse({ description: 'keyword가 문자열 하나가 아니거나, 허용되지 않은 쿼리 파라미터가 포함됨' })
+  @ApiUnauthorizedResponse({ description: '세션 ID가 없거나, 세션이 유효하지 않거나, 이미 교체됨' })
+  @ApiInternalServerErrorResponse({ description: '사용자 검색 중 서버 오류 발생' })
+  public async searchUsers(
+    @GetUser() user: SessionPayload,
+    @Query() query: SearchUsersQueryDto
+  ): Promise<SearchUsersResponseDto> {
+    const users = await this.userService.searchUsers(user, query.keyword?.trim());
+
+    return {
+      message: '사용자 검색에 성공했습니다.',
+      data: {
+        users
+      }
+    };
+  }
 
   @UseGuards(SessionAuthGuard)
   @Get('/profile')
